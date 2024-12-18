@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:get/get.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_to_speedv1/Data/data.dart';
+import 'package:image_to_speedv1/Requirements/fade-out.dart';
 import 'package:image_to_speedv1/Screens/history.dart';
 import 'package:image_to_speedv1/Screens/result.dart';
 
@@ -31,28 +32,59 @@ class _GalleryState extends State<Gallery> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? image =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _image = File(image.path);
-      });
-      _recognizeText(_image!);
-    }
+    XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    String description = await getImageDescription(File(image!.path));
+    setState(() {
+      _image = File(image.path);
+    });
+    _recognizeText(_image!, description);
   }
 
   Future<void> _clickImage() async {
     final XFile? image =
         await ImagePicker().pickImage(source: ImageSource.camera);
-    if (image != null) {
-      setState(() {
-        _image = File(image.path);
-      });
-      _recognizeText(_image!);
+    String description = await getImageDescription(File(image!.path));
+    setState(() {
+      _image = File(image.path);
+    });
+    _recognizeText(_image!, description);
+  }
+
+  Future<String> getImageDescription(File imageFile) async {
+    final inputImage = InputImage.fromFilePath(imageFile.path);
+    // Create ImageLabelerOptions with desired settings
+    final options = ImageLabelerOptions(
+      confidenceThreshold: 0.7, // Adjust threshold as needed
+    );
+
+    final labeler = ImageLabeler(options: options);
+
+    try {
+      final List<ImageLabel> labels = await labeler.processImage(inputImage);
+      if (labels.isNotEmpty) {
+        // Combine the top 5 labels to form a descriptive sentence
+        final topLabels = labels.take(5).toList();
+        String description = "The image contains ";
+        for (int i = 0; i < topLabels.length; i++) {
+          description += topLabels[i].label;
+          if (i < topLabels.length - 1) {
+            description += ", ";
+          }
+        }
+        return description;
+      } else {
+        return "No objects or scenes could be identified in the image.";
+      }
+    } catch (e) {
+      print('Error labeling image: $e');
+      return "Error processing image.";
+    } finally {
+      labeler.close();
     }
   }
 
-  Future<void> _recognizeText(File image) async {
+  Future<void> _recognizeText(File image, String description,
+      {String? preSavedText}) async {
     final inputImage = InputImage.fromFilePath(image.path);
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
 
@@ -66,6 +98,8 @@ class _GalleryState extends State<Gallery> {
         routeName: routes["result"],
         () => ResultView(
           text: _text,
+          image: image,
+          description: description,
         ),
         transition: custransition,
         duration: cusDuration,
@@ -83,7 +117,6 @@ class _GalleryState extends State<Gallery> {
 
   @override
   Widget build(BuildContext context) {
-    final currentRoute = ModalRoute.of(context)?.settings.name;
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
@@ -151,6 +184,17 @@ class _GalleryState extends State<Gallery> {
                     );
               },
             ),
+            ListTile(
+              title: Text("-----------Developers---------"),
+            ),
+            for (int i = 0; i < names.length; i++)
+              ListTile(
+                title: Text(
+                  "${names.keys.elementAt(i)} - ${names.values.elementAt(i)}",
+                  style: TextStyle(fontSize: 15.w),
+                ),
+                // onTap: () { _handleNavigation(context, i); },
+              ),
           ],
         ),
       ),
@@ -162,125 +206,79 @@ class _GalleryState extends State<Gallery> {
         child: SafeArea(
           child: Column(
             children: [
-              SizedBox(
-                height: 20.h,
-              ),
-              Stack(
-                children: [
-                  Container(
-                    color: Colors.grey,
-                    width: 250.w,
-                    height: 250.h,
-                  ),
-                  _image == null
-                      ? Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 70.w,
-                            vertical: 120.h,
-                          ),
-                          child: const Text("No Image Selected"),
-                        )
-                      : Image.file(
-                          _image!,
-                          width: 250.w,
-                          height: 250.h,
-                          fit: BoxFit.fill,
-                        )
-                ],
-              ),
-              SizedBox(
-                height: 40.h,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.r),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomLeft,
-                        colors: [
-                          Colors.blue,
-                          Colors.blueAccent,
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 5.h,
-                        horizontal: 10.w,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          _pickImage();
-                        },
-                        child: const Text(
-                          "Gallery",
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10.r),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomLeft,
-                        colors: [
-                          Colors.blue,
-                          Colors.blueAccent,
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 5.h,
-                        horizontal: 10.w,
-                      ),
-                      child: TextButton(
-                        onPressed: () {
-                          _clickImage();
-                        },
-                        child: const Text(
-                          "Camera",
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 10.w),
-                child: Text(
-                  " Developers",
-                  style: TextStyle(fontSize: 22.r),
+                padding: EdgeInsets.only(top: 40.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FadedWidget(
+                      child: Image.asset(
+                        "assets/${SchedulerBinding.instance.platformDispatcher.platformBrightness}.jpg",
+                        width: 200.w,
+                        height: 180.h,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 22.w),
-                child: const Divider(),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 120.w),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height *
-                      0.5, // Give it a fixed height
-                  child: ListView.builder(
-                    itemCount: names.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(names.keys.elementAt(index)),
-                        subtitle: Text(names.values.elementAt(index)),
-                      );
-                    },
-                  ),
+                padding: EdgeInsets.symmetric(vertical: 50.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 150.h,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueGrey,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: SizedBox(
+                              width: 180.w,
+                              child: Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: TextButton(
+                                  onPressed: () => _clickImage(),
+                                  child: Text(
+                                    "Take a Picture",
+                                    style: TextStyle(
+                                      fontSize: 20.r,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blueGrey,
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: SizedBox(
+                              width: 180.w,
+                              child: Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: TextButton(
+                                  onPressed: () => _pickImage(),
+                                  child: Text(
+                                    "Gallery",
+                                    style: TextStyle(
+                                      fontSize: 20.r,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

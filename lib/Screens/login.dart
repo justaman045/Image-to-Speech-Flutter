@@ -27,29 +27,23 @@ class _LoginState extends State<Login> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: 70.h,
-                  ),
-                  child: SizedBox(
-                    height: 200.r,
-                    child: const Image(
-                      image: AssetImage("assets/intro.jpg"),
-                    ),
-                  ),
-                ),
-              ],
-            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 20.h),
               child: Text(
-                "Sign In",
+                "Welcome Back !",
                 style: TextStyle(
                   fontSize: 30.r,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 22.w, right: 22.w, bottom: 20.h),
+              child: Text(
+                "Enter your Credentials for Login in to your Account",
+                style: TextStyle(
+                  fontSize: 20.r,
+                  fontWeight: FontWeight.w300,
                 ),
               ),
             ),

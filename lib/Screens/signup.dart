@@ -21,6 +21,7 @@ class _SignupState extends State<Signup> {
   bool _showPassword = true;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,28 +30,22 @@ class _SignupState extends State<Signup> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: 70.h,
-                  ),
-                  child: SizedBox(
-                    height: 200.r,
-                    child: const Image(
-                      image: AssetImage("assets/intro.jpg"),
-                    ),
-                  ),
-                ),
-              ],
-            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 20.h),
               child: Text(
                 "Sign Up",
                 style: TextStyle(
                   fontSize: 30.r,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(left: 22.w, bottom: 10.h),
+              child: Text(
+                "Create your Account",
+                style: TextStyle(
+                  fontSize: 20.r,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -65,9 +60,13 @@ class _SignupState extends State<Signup> {
                     child: TextFormField(
                       controller: emailController,
                       decoration: InputDecoration(
+                        hintText: "Email ID",
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r)),
-                        icon: const Icon(Icons.alternate_email),
+                        icon: Icon(
+                          Icons.person,
+                          size: 30.r,
+                        ),
                       ),
                       validator: (value) {
                         if (RegExp(
@@ -87,9 +86,13 @@ class _SignupState extends State<Signup> {
                       obscureText: _showPassword,
                       controller: passwordController,
                       decoration: InputDecoration(
+                        hintText: "Password",
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r)),
-                        icon: const Icon(Icons.lock_outline),
+                        icon: Icon(
+                          Icons.lock_outline,
+                          size: 30.r,
+                        ),
                         suffixIcon: GestureDetector(
                             onTap: () {
                               _showPassword = !_showPassword;
@@ -109,7 +112,39 @@ class _SignupState extends State<Signup> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 22.w, vertical: 10.h),
+                    child: TextFormField(
+                      obscureText: _showPassword,
+                      controller: confirmPasswordController,
+                      decoration: InputDecoration(
+                        hintText: "Confirm Password",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10.r)),
+                        icon: Icon(
+                          Icons.lock_outline,
+                          size: 30.r,
+                        ),
+                        suffixIcon: GestureDetector(
+                            onTap: () {
+                              _showPassword = !_showPassword;
+                              setState(() {});
+                            },
+                            child: Icon(!_showPassword
+                                ? Icons.visibility_rounded
+                                : Icons.visibility_off_rounded)),
+                      ),
+                      validator: (value) {
+                        if (value!.length > 7) {
+                          return null;
+                        } else {
+                          return "Password can only be minimum opf 8 Characters";
+                        }
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40.h),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10.r),
@@ -126,18 +161,22 @@ class _SignupState extends State<Signup> {
                         padding: EdgeInsets.symmetric(horizontal: 120.w),
                         child: TextButton(
                           onPressed: () async {
-                            if (_formkey.currentState!.validate()) {
+                            if (_formkey.currentState!.validate() && confirmPasswordController.text == passwordController.text) {
                               try {
                                 await FirebaseAuth.instance
                                     .createUserWithEmailAndPassword(
-                                        email: emailController.text,
-                                        password: passwordController.text).then((value) => Get.offAll(
-                                          routeName: routes["homePage"],
-                                          () => const Gallery(),
-                                          transition: custransition,
-                                          duration: cusDuration,
-                                          curve: cusCurve,
-                                        ));
+                                      email: emailController.text,
+                                      password: passwordController.text,
+                                    )
+                                    .then(
+                                      (value) => Get.offAll(
+                                        routeName: routes["homePage"],
+                                        () => const Gallery(),
+                                        transition: custransition,
+                                        duration: cusDuration,
+                                        curve: cusCurve,
+                                      ),
+                                    );
                               } on FirebaseAuthException catch (e) {
                                 debugPrint(e.message);
                               }

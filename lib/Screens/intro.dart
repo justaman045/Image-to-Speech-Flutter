@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:image_to_speedv1/Data/data.dart';
+import 'package:image_to_speedv1/Requirements/fade-out.dart';
 import 'package:image_to_speedv1/Screens/gallery.dart';
 import 'package:image_to_speedv1/Screens/login.dart';
 
@@ -26,9 +27,14 @@ class Intro extends StatelessWidget {
                     top: 70.h,
                   ),
                   child: SizedBox(
-                    height: 200.r,
-                    child: const Image(
-                      image: AssetImage("assets/intro.jpg"),
+                    height: 200.h,
+                    child: FadedWidget(
+                      child: Image.asset(
+                        "assets/intro.jpg",
+                        width: 250.w,
+                        height: 250.h,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
@@ -40,15 +46,19 @@ class Intro extends StatelessWidget {
               width: 360.w,
               child: Padding(
                 padding: EdgeInsets.only(
-                  left: 35.w,
                   top: 50.h,
                 ),
-                child: Text(
-                  introHeader,
-                  style: TextStyle(
-                    fontSize: 30.r,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      introHeader,
+                      style: TextStyle(
+                        fontSize: 30.r,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
