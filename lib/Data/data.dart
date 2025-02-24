@@ -13,9 +13,5 @@ Curve cusCurve = Curves.decelerate;
 Transition custransition = Transition.cupertino;
 Duration  cusDuration = const Duration(seconds: 1);
 Map<String, String> names = {
-  "Vishal Kumar Ojha" : "23BHI10067",
-  "Rishav Ramnandan Mishra" : "23BHI10011",
-  "Abhishek Kumar" : "23BHI10052",
-  "Mansi Kaushik" : "23BHI10002",
-  "Saniya Saw" : "23BHI10022"
+  "Names": "Social Security Number"
 };
